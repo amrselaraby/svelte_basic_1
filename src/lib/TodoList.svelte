@@ -2,9 +2,32 @@
 
 <script>
 	import Button from './Button.svelte'
-	import { createEventDispatcher } from 'svelte'
+	import { afterUpdate, beforeUpdate, createEventDispatcher, onDestroy, onMount } from 'svelte'
 
+	onMount(() => {
+		console.log('Mounted')
+		return () => {
+			console.log('Destroyed 2')
+		}
+	})
+	onDestroy(() => console.log('Destroyed'))
+	beforeUpdate(() => {
+		if (listDiv) {
+			console.log(listDiv.offsetHeight)
+		}
+	})
+	afterUpdate(() => {
+		console.log(listDiv.offsetHeight)
+	})
 	export let todos = []
+	export const readonly = 'read only'
+	export function clearInput() {
+		inputText = ''
+	}
+	export function focusInput() {
+		input.focus()
+	}
+	let input, listDiv
 	let inputText = ''
 	const dispatch = createEventDispatcher()
 	function handleAddTodo() {
@@ -19,20 +42,45 @@
 			inputText = ''
 		}
 	}
+	function handleRemoveTodo(id) {
+		dispatch('removetodo', {
+			id
+		})
+	}
+	function handleToggleTodo(id, value) {
+		dispatch('toggletodo', {
+			id,
+			value
+		})
+	}
 </script>
 
 svelte:
 
 <div class="todo-list-wrapper">
-	<ul>
-		{#each todos as { id, title }, index (id)}
-			{@const number = index + 1}
-			<li>{number}- {title}</li>
-		{/each}
-	</ul>
+	<div class="todo-list" bind:this={listDiv}>
+		<ul>
+			{#each todos as { id, title, completed } (id)}
+				<li>
+					<label>
+						<input
+							on:input={event => {
+								event.currentTarget.checked = completed
+								handleToggleTodo(id, !completed)
+							}}
+							type="checkbox"
+							checked={completed}
+						/>
+						{title}
+					</label>
+					<button on:click={() => handleRemoveTodo(id)}>Remove</button>
+				</li>
+			{/each}
+		</ul>
+	</div>
 	{inputText.length}/140
 	<form class="add-todo-form" on:submit|preventDefault={handleAddTodo}>
-		<input bind:value={inputText} />
+		<input bind:this={input} bind:value={inputText} />
 		<Button type="submit" disabled={!inputText}>Add</Button>
 	</form>
 </div>

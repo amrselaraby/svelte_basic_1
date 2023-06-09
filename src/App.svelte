@@ -2,6 +2,8 @@
 	import TodoList from './lib/TodoList.svelte'
 	import { v4 as uuid } from 'uuid'
 
+	let todoList
+	let showList = true
 	let todos = [
 		{
 			id: uuid(),
@@ -21,7 +23,8 @@
 	]
 
 	function handleAddTodo(event) {
-		// event.preventDefault()
+		event.preventDefault()
+
 		todos = [
 			...todos,
 			{
@@ -30,10 +33,35 @@
 				completed: false
 			}
 		]
+		todoList.clearInput()
+	}
+	function handleRemoveTodo(event) {
+		todos = todos.filter(t => t.id !== event.detail.id)
+	}
+	function handleToggleTodo(event) {
+		todos = todos.map(todo => {
+			if (todo.id === event.detail.id) {
+				return { ...todo, completed: event.detail.value }
+			}
+			return todo
+		})
 	}
 </script>
 
-<TodoList {todos} on:addtodo={handleAddTodo} />
+<label>
+	<input type="checkbox" bind:checked={showList} />
+	Show/Hide List
+</label>
+{#if showList}
+	<!-- content here -->
+	<TodoList
+		{todos}
+		bind:this={todoList}
+		on:addtodo={handleAddTodo}
+		on:removetodo={handleRemoveTodo}
+		on:toggletodo={handleToggleTodo}
+	/>
+{/if}
 
 <style>
 </style>
